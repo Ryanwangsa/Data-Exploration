@@ -1,0 +1,144 @@
+---
+title: "DATA EXPLORATION PROJECT"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## LOADING NECCESSARY PACKAGES
+
+```{r pack ,echo=TRUE}
+library(tidyverse)
+library(vtable)
+library(jtools)
+library(readr)
+library(purrr)
+library(dplyr)
+library(plyr)
+
+
+```
+
+
+## READING DATA AND DATA CLEANING
+
+After loading the data sets from Lab3_rawdata, we must perform some data evaluations like looking at the data summary and structure. Moreover, the data must be cleaned for it to be used in analysis later on.
+
+```{r data, echo=TRUE}
+# Reading most+recent+cohorts+(scorecard + elements).csv
+
+
+scorecard <- read.csv("Lab3_Rawdata/Most+Recent+Cohorts+(Scorecard+Elements).csv")
+summary(scorecard)
+
+
+# Reading id_name_link csv
+name_link<- read.csv("Lab3_Rawdata/id_name_link.csv")
+
+summary(name_link)
+
+
+
+# Joining the scorecard data to the name link data
+SCORECARD_LINKED<-scorecard %>% full_join(name_link, by = c("UNITID" = "unitid"),keep=TRUE)
+
+summary(SCORECARD_LINKED)
+
+str(SCORECARD_LINKED)
+
+#Reading the google trend datasets
+trends1<-read.csv("Lab3_Rawdata/trends_up_to_inter_1.csv")
+
+trends2<-read.csv("Lab3_Rawdata/trends_up_to_inter_2.csv")
+
+trends3<-read.csv("Lab3_Rawdata/trends_up_to_inter_3.csv")
+
+trends4<-read.csv("Lab3_Rawdata/trends_up_to_inter_4.csv")
+
+trends5<-read.csv("Lab3_Rawdata/trends_up_to_inter_5.csv")
+
+trends6<-read.csv("Lab3_Rawdata/trends_up_to_inter_6.csv")
+
+trendsUM<-read.csv("Lab3_Rawdata/trends_up_to_UM.csv")
+
+trendsPHOENIX<-read.csv("Lab3_Rawdata/trends_up_to_UPhoenix.csv")
+
+trendsUT<-read.csv("Lab3_Rawdata/trends_up_to_UT.csv")
+
+trendsUTMB<-read.csv("Lab3_Rawdata/trends_up_to_UTMB.csv")
+
+trendsYORK<-read.csv("Lab3_Rawdata/trends_up_to_Yorktowne.csv")
+
+trendsFINISH<-read.csv("Lab3_Rawdata/trends_up_to_finish.csv")
+# Merging the trend data sets into one data frame
+trends1$rn<-rownames(trends1)
+
+trends2$rn<-rownames(trends2)
+
+trends3$rn<-rownames(trends3)
+
+trends4$rn<-rownames(trends4)
+
+trends5$rn<-rownames(trends5)
+
+trends6$rn<-rownames(trends6)
+
+trendsUM$rn<-rownames(trendsUM)
+
+trendsPHOENIX$rn<-rownames(trendsPHOENIX)
+
+trendsUT$rn<-rownames(trendsUT)
+
+trendsUTMB$rn<-rownames(trendsUTMB)
+
+trendsYORK$rn<-rownames(trendsYORK)
+
+trendsFINISH$rn<-rownames(trendsFINISH)
+
+GOOGLE_TREND<-join_all(list(trends1,trends2,trends3,trends4,trends5,trends6,trendsUM,trendsPHOENIX,trendsUTMB,trendsYORK,trendsFINISH),by="rn",type="full")
+
+summary(GOOGLE_TREND)
+
+
+
+# Joining the scorecard dataframe with the google trend dataframe
+
+SCORECARD_trend<-SCORECARD_LINKED %>% inner_join(GOOGLE_TREND, by = "schname",keep=TRUE)
+
+# Dropping universities with duplicate school names
+
+SCORECARD_trends<-SCORECARD_trend %>% distinct(schname.x,schname.y, .keep_all = TRUE)
+
+```
+
+
+# Regression analysis
+
+The variables that we have picked to evaluate if the high earnings or low earning college is the cost NPT4_PUB.AVERAGE.ANNUAL.COST and the md_earn_wne_p10.REPORTED.EARNINGS as this gives us a chance to look at education as an investment. This will clearly show the universities with the highest Return on investments and if the high ROI translates to a higher trend index on google.
+
+
+```{r analy,echo=TRUE, echo=TRUE}
+lmindex<- lm(index~md_earn_wne_p10.REPORTED.EARNINGS + NPT4_PUB.AVERAGE.ANNUAL.COST,data = SCORECARD_trends)
+summary(lmindex)
+```
+
+From the above regression, the pvalues that have been generated are way too large as compared to 0.05. This is an indication of a no relation between the high income colleges with the google trend index.
+this can be reinforced when we have a look at the residues which basically should be nearing zero for the fit and arguement of having a significate relation between the google trend index and the income of colleges.
+
+
+
+# Adding a regression plot 
+
+```{r plot, echo=TRUE}
+plot(SCORECARD_trends$index,pch = 16, col = "blue")
+abline(lmindex)
+
+```
+
+This plot reinforces our the results that have being given by the regression analysis above. we can conculsively say that the income of colleges rarely affects the google trend index.
+
+
